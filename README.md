@@ -1,1 +1,109 @@
 It was mainly a college mini project. As we, me and my teammate are from eee background, all of our project was hardware based. But in the microprocessor and interfacing course we made a mini project which is related to arduino , A digital clock with hour , minutes and seconds and swich to control those hour and minutes. Thank you.
+here is the code :#define NUM_OF_DISPLAY 6
+// Pin connections
+int strobePin = A2;
+int dataPin = A1;
+int clockPin = A0;
+// Switch pins
+int hourSwitchPin = 2; // Adjust hours
+int minuteSwitchPin = 3; // Adjust minutes
+int secondSwitchPin = 4; // Adjust seconds
+int resetSwitchPin = 5; // Reset all displays to zero
+// Buffer for the digits to display
+char shiftOutBuffer[NUM_OF_DISPLAY] = {0};
+// Segment character map for digits (0-9) and blank
+byte segChar[] = {
+0b00111111, // 0
+0b00000110, // 1
+0b01011011, // 2
+0b01001111, // 3
+0b01100110, // 4
+0b01101101, // 5
+0b01111101, // 6
+0b00000111, // 7
+0b01111111, // 8
+0b01101111, // 9
+0b00000000 // Blank
+};
+unsigned long lastUpdate = 0; // Time tracking for display update
+unsigned long lastSwitchPress[4] = {0, 0, 0, 0}; // Debounce tracking for switches
+unsigned int hours = 23, minutes = 59, seconds = 30; // Starting time: 23:59:30
+void update_display() {
+digitalWrite(strobePin, LOW);
+for (int i = NUM_OF_DISPLAY - 1; i >= 0; i--) {
+shiftOut(dataPin, clockPin, MSBFIRST, segChar[shiftOutBuffer[i]]);
+}
+digitalWrite(strobePin, HIGH);
+}
+void reset_digits() {
+hours = 0;
+minutes = 0;
+seconds = 0;
+for (int i = 0; i < NUM_OF_DISPLAY; i++) {
+shiftOutBuffer[i] = 0;
+}
+update_display();
+}
+void setup() {
+pinMode(strobePin, OUTPUT);
+pinMode(clockPin, OUTPUT);
+pinMode(dataPin, OUTPUT);
+// Configure switch pins with pull-up resistors
+pinMode(hourSwitchPin, INPUT_PULLUP);
+pinMode(minuteSwitchPin, INPUT_PULLUP);
+pinMode(secondSwitchPin, INPUT_PULLUP);
+pinMode(resetSwitchPin, INPUT_PULLUP); // Configure reset pin with pull-up
+reset_digits(); // Clear the display
+}
+void loop() {
+// Handle button presses with debounce logic
+if (digitalRead(hourSwitchPin) == LOW && millis() - lastSwitchPress[0] > 200)
+{
+lastSwitchPress[0] = millis();
+// Increment hour (wrap around at 24)
+hours = (hours + 1) % 24;
+// Recalculate seconds based on updated hours
+seconds = (hours * 3600) + (minutes * 60) + seconds % 60;
+}
+if (digitalRead(minuteSwitchPin) == LOW && millis() - lastSwitchPress[1] >
+200) {
+lastSwitchPress[1] = millis();
+// Increment minutes (wrap around at 60)
+minutes = (minutes + 1) % 60;
+// Recalculate seconds based on updated minutes
+seconds = (hours * 3600) + (minutes * 60) + seconds % 60;
+}
+if (digitalRead(secondSwitchPin) == LOW && millis() - lastSwitchPress[2] >
+200) {
+lastSwitchPress[2] = millis();
+// Increment seconds (wrap around at 60)
+seconds = (seconds + 1) % 60;
+// Recalculate the full time after seconds increment
+seconds = (hours * 3600) + (minutes * 60) + seconds;
+}
+{
+if (digitalRead(resetSwitchPin) == LOW && millis() - lastSwitchPress[3] > 200)
+lastSwitchPress[3] = millis();
+reset_digits(); // Reset time and clear display
+}
+// Update time every second
+if (millis() - lastUpdate >= 1000) {
+lastUpdate = millis();
+// Increment the second and wrap around at 60
+seconds = (seconds + 1) % 60;
+if (seconds == 0) {
+minutes = (minutes + 1) % 60;
+if (minutes == 0) {
+hours = (hours + 1) % 24;
+}
+}
+// Update the display buffer
+shiftOutBuffer[0] = hours / 10; // Tens place of hours
+shiftOutBuffer[1] = hours % 10; // Units place of hours
+shiftOutBuffer[2] = minutes / 10; // Tens place of minutes
+shiftOutBuffer[3] = minutes % 10; // Units place of minutes
+shiftOutBuffer[4] = seconds / 10; // Tens place of seconds
+shiftOutBuffer[5] = seconds % 10; // Units place of seconds
+update_display();
+}
+}
