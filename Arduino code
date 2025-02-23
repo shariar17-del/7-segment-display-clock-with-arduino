@@ -106,12 +106,5 @@ shiftOutBuffer[5] = seconds % 10; // Units place of seconds
 update_display();
 }
 }
-Conclusion: The Digital clock made in this project is a simple Digital clock
-representing only hour, minute Second. it is a 24-hour clock. The construction
-of this clock is very simple.
-References:
-1. www.Youtube.com
-2. https://www.electronics-tutorials.ws/blog/7-segment-display-
-tutorial.html
-3. https://www.coursehero.com/home/#/home/
+
 4. https://friendtechbd.com
